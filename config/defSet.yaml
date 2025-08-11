@@ -1,0 +1,54 @@
+# MCP插件默认配置文件
+mcp:
+  # MCP服务器配置
+  server:
+    # 是否启用MCP服务器
+    enabled: true
+    # MCP服务器端口（使用Yunzai主端口的子路径）
+    path: "/MCP"
+    # 允许的来源（CORS）
+    allowedOrigins:
+      - "*"
+    # API密钥（用于身份验证）
+    apiKey: "mcp-yunzai-2024"
+    # 是否启用详细日志
+    verbose: true
+    
+  # 权限配置
+  permissions:
+    # 是否允许重启Bot
+    allowRestart: true
+    # 是否允许关闭Bot
+    allowShutdown: true
+    # 是否允许访问Redis
+    allowRedis: true
+    # 是否允许发送消息
+    allowSendMessage: true
+    # 是否允许接收消息
+    allowReceiveMessage: true
+    # 是否允许访问插件
+    allowPluginAccess: true
+    # 是否允许文件操作
+    allowFileOperations: true
+    # 是否允许执行命令
+    allowCommandExecution: true
+    
+  # 安全配置
+  security:
+    # 最大请求大小（MB）
+    maxRequestSize: 10
+    # 请求频率限制（每分钟）
+    rateLimit: 100
+    # 是否记录所有请求
+    logAllRequests: true
+    
+  # 调试配置
+  debug:
+    # 是否启用调试模式
+    enabled: true
+    # 调试日志级别
+    logLevel: "info"
+    # 是否保存调试历史
+    saveHistory: true
+    # 历史记录最大条数
+    maxHistorySize: 1000

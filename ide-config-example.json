@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "yunzai-mcp": {
+      "command": "node",
+      "args": [
+        "c:\\Users\\X\\Desktop\\Bot-Dev\\Yunzai\\plugins\\Yunzai-MCP-plugin\\mcp-server.js"
+      ],
+      "env": {
+        "YUNZAI_API_KEY": "mcp-yunzai-2024",
+        "YUNZAI_BASE_URL": "http://127.0.0.1:2536",
+        "YUNZAI_MCP_PATH": "/MCP"
+      }
+    }
+  }
+}

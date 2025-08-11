@@ -1,0 +1,41 @@
+{
+  "name": "yunzai-mcp-plugin",
+  "version": "1.0.0",
+  "description": "Yunzai MCP Plugin - LLM与Yunzai通信插件，提供全权限调试能力",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "yunzai",
+    "plugin",
+    "mcp",
+    "llm",
+    "debug",
+    "communication"
+  ],
+  "author": "MCP Plugin Developer",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "yunzai": {
+    "name": "MCP通信插件",
+    "description": "提供LLM与Yunzai的通信能力，支持全权限调试",
+    "version": "1.0.0",
+    "structure": "apps",
+    "commands": [
+      "#mcp",
+      "#mcp状态",
+      "#mcp测试"
+    ]
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.14.2",
+    "lodash": "^4.17.21",
+    "js-yaml": "^4.1.0",
+    "node-fetch": "^3.3.2"
+  }
+}
