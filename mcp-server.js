@@ -278,6 +278,84 @@ const MCP_TOOLS = {
             },
             required: ['message_id']
         }
+    },
+    'yunzai_restart': {
+        name: 'yunzai_restart',
+        description: '重启Yunzai机器人',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                force: {
+                    type: 'boolean',
+                    description: '是否强制重启（默认false）'
+                },
+                delay: {
+                    type: 'number',
+                    description: '重启延迟时间（毫秒，默认1000）'
+                }
+            },
+            required: []
+        }
+    },
+    'yunzai_get_logs': {
+        name: 'yunzai_get_logs',
+        description: '获取Yunzai运行日志',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                lines: {
+                    type: 'number',
+                    description: '获取日志行数（默认100）'
+                },
+                level: {
+                    type: 'string',
+                    description: '日志级别过滤（info, warn, error, debug等）'
+                },
+                since: {
+                    type: 'string',
+                    description: '获取指定时间之后的日志（ISO时间字符串）'
+                },
+                search: {
+                    type: 'string',
+                    description: '搜索关键词'
+                },
+                includeRaw: {
+                    type: 'boolean',
+                    description: '是否包含原始日志数据（默认false）'
+                }
+            },
+            required: []
+        }
+    },
+    'yunzai_get_message_responses': {
+        name: 'yunzai_get_message_responses',
+        description: '获取消息处理后的完整响应',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                messageId: {
+                    type: 'string',
+                    description: '消息ID'
+                },
+                userId: {
+                    type: 'string',
+                    description: '用户ID'
+                },
+                groupId: {
+                    type: 'string',
+                    description: '群ID'
+                },
+                since: {
+                    type: 'string',
+                    description: '获取指定时间之后的响应（ISO时间字符串）'
+                },
+                includeOriginal: {
+                    type: 'boolean',
+                    description: '是否包含原始消息（默认true）'
+                }
+            },
+            required: []
+        }
     }
 };
 
@@ -353,7 +431,31 @@ async function executeTool(name, args) {
                     message_id: args.message_id,
                     bot_id: args.bot_id
                 });
-                
+
+            case 'yunzai_restart':
+                return await makeRequest('bot.restart', {
+                    force: args.force,
+                    delay: args.delay
+                });
+
+            case 'yunzai_get_logs':
+                return await makeRequest('logs.get', {
+                    lines: args.lines,
+                    level: args.level,
+                    since: args.since,
+                    search: args.search,
+                    includeRaw: args.includeRaw
+                });
+
+            case 'yunzai_get_message_responses':
+                return await makeRequest('message.response', {
+                    messageId: args.messageId,
+                    userId: args.userId,
+                    groupId: args.groupId,
+                    since: args.since,
+                    includeOriginal: args.includeOriginal
+                });
+
             default:
                 throw new Error(`Unknown tool: ${name}`);
         }
