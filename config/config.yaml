@@ -20,8 +20,12 @@ mcp:
     allowRestart: true
     # 是否允许关闭Bot
     allowShutdown: true
-    # 是否允许访问Redis
+    # 是否允许访问Redis（读取）
     allowRedis: true
+    # 是否允许读取Redis
+    allowRedisRead: true
+    # 是否允许写入Redis
+    allowRedisWrite: true
     # 是否允许发送消息
     allowSendMessage: true
     # 是否允许接收消息
