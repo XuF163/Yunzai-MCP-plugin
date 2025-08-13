@@ -356,6 +356,42 @@ const MCP_TOOLS = {
             },
             required: []
         }
+    },
+    'yunzai_get_time': {
+        name: 'yunzai_get_time',
+        description: '获取当前时间信息（包含多种格式和时区支持）',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                timezone: {
+                    type: 'string',
+                    description: '时区（默认Asia/Shanghai）'
+                }
+            },
+            required: []
+        }
+    },
+    'yunzai_format_time': {
+        name: 'yunzai_format_time',
+        description: '格式化时间戳为指定格式',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                timestamp: {
+                    type: 'number',
+                    description: '时间戳（毫秒，默认当前时间）'
+                },
+                format: {
+                    type: 'string',
+                    description: '格式字符串（默认YYYY-MM-DD HH:mm:ss）'
+                },
+                timezone: {
+                    type: 'string',
+                    description: '时区（默认Asia/Shanghai）'
+                }
+            },
+            required: []
+        }
     }
 };
 
@@ -454,6 +490,18 @@ async function executeTool(name, args) {
                     groupId: args.groupId,
                     since: args.since,
                     includeOriginal: args.includeOriginal
+                });
+
+            case 'yunzai_get_time':
+                return await makeRequest('time.get', {
+                    timezone: args.timezone
+                });
+
+            case 'yunzai_format_time':
+                return await makeRequest('time.format', {
+                    timestamp: args.timestamp,
+                    format: args.format,
+                    timezone: args.timezone
                 });
 
             default:
