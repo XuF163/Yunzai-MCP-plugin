@@ -6,7 +6,7 @@
 
 - 🚀 **全权限访问**: 计划支持Bot重启、关闭、简易消息收发等
 ### 效果演示
-![img.png](img.png)
+![img.png](resources/img.png)
 ### TO DO
 - [ ] 内置Context Engine以减少agent阅读代码时的token消耗以及索引效率提升  
 - [ ] 对非合作Bot进行扫描、调试、风险评估、功能分析与二次开发
