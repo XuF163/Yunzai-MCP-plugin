@@ -52,3 +52,8 @@ mcp:
     saveHistory: true
     # 历史记录最大条数
     maxHistorySize: 1000
+  
+  # 功能开关
+  features:
+    # 是否隐藏/删除旧式动作（如 simulate.*、send.*）
+    hideLegacyActions: true
