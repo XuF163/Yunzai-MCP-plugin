@@ -7,7 +7,7 @@
 - 重启Bot
 - 构造任意测试用户或测试群，实现 **包含button在内的消息段的** 收发
 ### 效果演示
-![img.png](resources/img.png)
+![img.png](resources/演示.png)
 ### TO DO
 ~~- [ ] 内置Context Engine以减少agent阅读代码时的token消耗以及索引效率提升~~用别的MCP替代就行了  
 ~~- [ ] 对非合作Bot进行扫描、调试、风险评估、功能分析与二次开发~~ LLM会分不清，忽略  
@@ -65,3 +65,7 @@ env = { SystemRoot = 'C:\WINDOWS', COMSPEC = 'C:\WINDOWS\system32\cmd.exe' , MCP
 ### 使用须知
 - **面向开源共享**：本项目服务于开源社区，Fork、Clone 或以任何方式使用即表示您已阅读并同意上述授权条款；
 - **严禁商业滥用**：禁止将本项目的任何部分用于营利性闭源插件、传销、诈骗、引流、变现等违背社区精神或社会公序良俗的活动；
+
+### 赞助与支持 
+通过[我的AFF链接](https://www.bigmodel.cn/claude-code?ic=MIWBOWZZTI)购买GLM Coding可享受九折优惠
+![img.png](resources/glm.png)
