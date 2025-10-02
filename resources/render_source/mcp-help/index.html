@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>{{title}}</title>
+    <link
+      rel="stylesheet"
+      href="{{pluResPath}}/render_source/mcp-help/index.css"
+    />
+  </head>
+  <body>
+    <div id="container">
+      <div class="mcp-help-container">
+        <header class="mcp-help-header">
+          <h1 class="mcp-help-title">{{title}}</h1>
+          <p class="mcp-help-subtitle">{{subtitle}}</p>
+          <p class="mcp-help-intro">{{intro}}</p>
+        </header>
+        <main class="mcp-help-body">
+          {{if commands && commands.length}}
+          <ul class="mcp-help-list">
+            {{each commands cmd}}
+            <li class="mcp-help-item">
+              <span class="mcp-help-command">{{cmd.command}}</span>
+              <span class="mcp-help-desc">{{cmd.desc}}</span>
+            </li>
+            {{/each}}
+          </ul>
+          {{else}}
+          <div class="mcp-help-empty">当前暂无帮助信息</div>
+          {{/if}}
+        </main>
+        <footer class="mcp-help-footer">
+          <span class="mcp-help-brand">Yunzai MCP Plugin</span>
+          <span class="mcp-help-timestamp">生成时间：{{generatedAt}}</span>
+        </footer>
+      </div>
+    </div>
+  </body>
+</html>
