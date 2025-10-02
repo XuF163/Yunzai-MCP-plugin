@@ -1,5 +1,9 @@
 // @ts-nocheck
 
+import fs from 'fs/promises';
+import path from 'path';
+import crypto from 'crypto';
+
 declare const Bot: any;
 declare const logger: any;
 
@@ -16,6 +20,8 @@ export class MockEnvironment {
     this.groups = new Map(); // group_id -> { group_id, name }
     this.groupMembers = new Map(); // group_id -> Map(user_id -> { user_id, nickname, role })
     this.initialized = false;
+    this.imageDir = path.join(process.cwd(), 'data', 'mcp_client');
+    this._fetchFn = null;
   }
 
   init() {
@@ -125,6 +131,127 @@ export class MockEnvironment {
     return this.groups.get(gid);
   }
 
+  async ensureMessageImages(msg) {
+    const processItem = async (item) => {
+      if (!item || typeof item !== 'object') return;
+      if (Array.isArray(item)) {
+        for (const sub of item) await processItem(sub);
+        return;
+      }
+      if (item.type === 'image') {
+        await this.processImageSegment(item);
+        return;
+      }
+      for (const value of Object.values(item)) {
+        if (typeof value === 'object' && value) {
+          await processItem(value);
+        }
+      }
+    };
+
+    if (Array.isArray(msg)) {
+      for (const item of msg) await processItem(item);
+    } else if (typeof msg === 'object' && msg !== null) {
+      await processItem(msg);
+    }
+  }
+
+  async processImageSegment(item) {
+    if (!item || item.mcpLocalPath) return;
+
+    let buffer = null;
+    let fileName = item.name || '';
+
+    const ensureDir = async () => {
+      await fs.mkdir(this.imageDir, { recursive: true });
+    };
+
+    const finalize = async (buf, preferredName) => {
+      if (!buf) return null;
+      await ensureDir();
+      const { relativePath, finalName } = await this.writeImageBuffer(buf, preferredName);
+      item.mcpLocalPath = relativePath;
+      if (!item.name) item.name = finalName;
+      return buf;
+    };
+
+    try {
+      if (Buffer.isBuffer(item.file)) {
+        buffer = item.file;
+        await finalize(buffer, fileName);
+      } else if (typeof item.file === 'string') {
+        const fileStr = String(item.file);
+        if (fileStr.startsWith('base64://')) {
+          const base64Data = fileStr.replace('base64://', '');
+          buffer = Buffer.from(base64Data, 'base64');
+          await finalize(buffer, fileName);
+        } else if (fileStr.startsWith('http://') || fileStr.startsWith('https://')) {
+          const fetched = await this.fetchImageBuffer(fileStr);
+          if (fetched) {
+            buffer = fetched;
+            let remoteName = '';
+            try { remoteName = path.basename(new URL(fileStr).pathname || ''); } catch {}
+            await finalize(buffer, fileName || remoteName);
+          }
+        } else {
+          const absPath = path.isAbsolute(fileStr) ? fileStr : path.resolve(process.cwd(), fileStr);
+          try {
+            buffer = await fs.readFile(absPath);
+            await finalize(buffer, fileName || path.basename(absPath));
+          } catch {}
+        }
+      } else if (item.url) {
+        const fetched = await this.fetchImageBuffer(item.url);
+        if (fetched) {
+          buffer = fetched;
+          let remoteName = '';
+          try { remoteName = path.basename(new URL(item.url).pathname || ''); } catch {}
+          await finalize(buffer, fileName || remoteName);
+        }
+      }
+
+      if (buffer && !item.url) {
+        try {
+          const urlName = item.name || path.basename(item.mcpLocalPath || '') || `image-${Date.now()}.jpg`;
+          item.url = await Bot.fileToUrl(buffer, { name: urlName });
+        } catch {}
+      }
+    } catch (err) {
+      logger?.warn?.('[MCP Mock] 图片保存失败:', err?.message || err);
+    }
+  }
+
+  sanitizeFileName(name) {
+    if (!name) return '';
+    return String(name).replace(/[^a-zA-Z0-9._-]/g, '_');
+  }
+
+  async writeImageBuffer(buffer, preferredName = '') {
+    const safeName = this.sanitizeFileName(preferredName);
+    let base = safeName || `image-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
+    if (!path.extname(base)) base += '.jpg';
+    const finalName = base;
+    const absolutePath = path.join(this.imageDir, finalName);
+    const relativePath = path.join('data', 'mcp_client', finalName).split(path.sep).join('/');
+    await fs.writeFile(absolutePath, buffer);
+    return { finalName, relativePath };
+  }
+
+  async fetchImageBuffer(url) {
+    try {
+      if (!this._fetchFn) {
+        this._fetchFn = globalThis.fetch || (await import('node-fetch')).default;
+      }
+      const res = await this._fetchFn(url);
+      if (!res.ok) return null;
+      const arrayBuffer = await res.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    } catch (err) {
+      logger?.warn?.('[MCP Mock] 图片下载失败:', err?.message || err);
+      return null;
+    }
+  }
+
   addFriend({ user_id, nickname }) {
     const fr = this.ensureFriend(user_id, nickname || 'Mock Friend');
     return { added: true, friend: fr };
@@ -187,6 +314,7 @@ export class MockEnvironment {
       user_id: friend.user_id,
       nickname: friend.nickname,
       async sendMsg(msg) {
+        await env.ensureMessageImages(msg);
         const payload = {
           type: 'private',
           target: friend.user_id,
@@ -235,6 +363,7 @@ export class MockEnvironment {
         };
       },
       async sendMsg(msg) {
+        await env.ensureMessageImages(msg);
         const payload = {
           type: 'group',
           target: group.group_id,
@@ -349,32 +478,35 @@ export class MockEnvironment {
       if (typeof item === 'string') return item;
       if (typeof item === 'object' && item) {
         if (item.type === 'image') {
-          // 生成 URL
+          await this.processImageSegment(item);
           let url = item.url;
           let label = 'Buffer';
-          let local = '';
+          let local = item.mcpLocalPath || '';
+
           try {
-            const name = item.name || `image-${Date.now()}.jpg`;
             if (!url) {
               if (Buffer.isBuffer(item.file)) {
+                const name = item.name || (item.mcpLocalPath ? path.basename(item.mcpLocalPath) : `image-${Date.now()}.jpg`);
                 url = await Bot.fileToUrl(item.file, { name });
-                label = 'Buffer';
-                local = `data/stdin/${name}`;
               } else if (typeof item.file === 'string') {
                 const fileStr = String(item.file);
                 if (fileStr.startsWith('http')) {
-                  url = fileStr; label = 'URL'; local = '';
+                  url = fileStr;
+                  label = 'URL';
                 } else if (fileStr.startsWith('base64://')) {
-                  const buf = Buffer.from(fileStr.replace('base64://',''), 'base64');
+                  const buf = Buffer.from(fileStr.replace('base64://', ''), 'base64');
+                  const name = item.name || (item.mcpLocalPath ? path.basename(item.mcpLocalPath) : `image-${Date.now()}.jpg`);
                   url = await Bot.fileToUrl(buf, { name });
-                  label = 'Buffer'; local = `data/stdin/${name}`;
-                } else {
-                  // 本地路径
-                  local = fileStr; label = 'File';
+                } else if (fileStr) {
+                  local = local || fileStr;
+                  label = 'File';
                 }
               }
             }
           } catch {}
+
+          if (!local && item.mcpLocalPath) local = item.mcpLocalPath;
+
           const lines = [
             `发送图片: ${label}`
           ];

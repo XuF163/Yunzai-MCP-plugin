@@ -137,7 +137,8 @@ const _path = process.cwd().replace(/\\/g, '/');
 
 const files = [
   'mcp-control.js',
-  'mcp-debug.js'
+  'mcp-debug.js',
+  'mcp-help.js'
 ];
 
 let ret = [];
@@ -161,3 +162,4 @@ for (let i in files) {
 }
 
 export { apps, mcpServer, stopMCPProcess };
+

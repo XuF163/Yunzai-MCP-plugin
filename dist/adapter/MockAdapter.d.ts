@@ -32,6 +32,14 @@ export declare class MockEnvironment {
     };
     ensureFriend(user_id: any, nickname?: string): any;
     ensureGroup(group_id: any, name?: string): any;
+    ensureMessageImages(msg: any): Promise<void>;
+    processImageSegment(item: any): Promise<void>;
+    sanitizeFileName(name: any): string;
+    writeImageBuffer(buffer: any, preferredName?: string): Promise<{
+        finalName: string;
+        relativePath: string;
+    }>;
+    fetchImageBuffer(url: any): Promise<Buffer<any>>;
     addFriend({ user_id, nickname }: {
         user_id: any;
         nickname: any;

@@ -1953,10 +1953,12 @@ export class MCPHandler {
                         catch (e) {
                             // URL 注册失败时静默降级
                         }
+                        const localPath = value.mcpLocalPath || (typeof value.file === 'string' && !value.file.startsWith('http') ? value.file : null);
                         const imgSanitized = {
                             type: 'image',
                             url: url || null,
                             name: value.name,
+                            path: localPath,
                             resolution: resolution ? `${resolution.width}x${resolution.height}` : 'unknown',
                             imageType: resolution?.type || 'unknown'
                         };

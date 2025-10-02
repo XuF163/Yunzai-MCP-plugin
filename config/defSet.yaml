@@ -53,6 +53,39 @@ mcp:
     # 历史记录最大条数
     maxHistorySize: 1000
   
+  # 渲染配置
+  render:
+    scale:
+      # 基础缩放（百分比）
+      base: 100
+      device:
+        # 最小/最大设备像素比
+        min: 1
+        max: 1
+        # 设备缩放因子
+        factor: 1
+      viewport:
+        # 是否根据缩放自适应视口
+        adaptive: false
+        min: 0.9
+        max: 1.35
+    viewport:
+      base:
+        width: 1080
+        height: 1920
+      deviceScaleFactor: 1
+      mobile: true
+      touch: true
+    image:
+      format: png
+      quality: 96
+      omitBackground: false
+    page:
+      waitUntil:
+        - networkidle0
+        - domcontentloaded
+      timeout: 90000
+  
   # 功能开关
   features:
     # 是否隐藏/删除旧式动作（如 simulate.*、send.*）
