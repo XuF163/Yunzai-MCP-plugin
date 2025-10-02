@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "watch": "tsc -w -p tsconfig.json",
-    "clean": "rimraf dist",
+    "clean": "rimraf model/dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

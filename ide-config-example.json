@@ -3,7 +3,7 @@
     "yunzai-mcp": {
       "command": "node",
       "args": [
-        "c:\\Users\\X\\Desktop\\Bot-Dev\\Yunzai\\plugins\\Yunzai-MCP-plugin\\mcp-server.js"
+        "c:\\Users\\X\\Desktop\\Bot-Dev\\Yunzai\\plugins\\Yunzai-MCP-plugin\\model\\dist\\mcp-server.js"
       ],
       "env": {
         "YUNZAI_API_KEY": "mcp-yunzai-2024",

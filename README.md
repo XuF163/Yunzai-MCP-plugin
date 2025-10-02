@@ -36,7 +36,7 @@ env = { SystemRoot = 'C:\WINDOWS', COMSPEC = 'C:\WINDOWS\system32\cmd.exe' , MCP
     "yunzai-mcp": {
       "command": "node",
       "args": [
-        "C:\\Users\\X\\Desktop\\Bot-Dev\\Yunzai\\plugins\\Yunzai-MCP-plugin\\dist\\mcp-server.js"
+        "C:\\Users\\X\\Desktop\\Bot-Dev\\Yunzai\\plugins\\Yunzai-MCP-plugin\\mode\\dist\\mcp-server.js"
       ],
       "env": {
         "YUNZAI_API_KEY": "mcp-yunzai-2024",

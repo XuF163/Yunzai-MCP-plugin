@@ -2,7 +2,7 @@ MCP 客户端（IDE/LLM）配置
 
 前置条件
 
-- 已在插件目录执行一次构建：`npm run build`（生成 `dist/mcp-server.js`）。
+- 已在插件目录执行一次构建：`npm run build`（生成 `model/dist/mcp-server.js`）。
 - Yunzai 已运行，且本插件 `mcp.server.enabled: true`。
 - API Key 与路径与服务端配置一致（见 `config/config.yaml` 或 `config/defSet.yaml`）。
 
@@ -21,7 +21,7 @@ Windows 示例（路径请按实际本机调整）
     "yunzai-mcp": {
       "command": "node",
       "args": [
-        "C:\\Users\\X\\Desktop\\Bot-Dev\\Yunzai\\plugins\\Yunzai-MCP-plugin\\dist\\mcp-server.js"
+        "C:\\Users\\X\\Desktop\\Bot-Dev\\Yunzai\\plugins\\Yunzai-MCP-plugin\\model\\dist\\mcp-server.js"
       ],
       "env": {
         "YUNZAI_API_KEY": "mcp-yunzai-2024",
@@ -43,7 +43,7 @@ Linux/macOS 示例
     "yunzai-mcp": {
       "command": "node",
       "args": [
-        "/absolute/path/to/Yunzai/plugins/Yunzai-MCP-plugin/dist/mcp-server.js"
+        "/absolute/path/to/Yunzai/plugins/Yunzai-MCP-plugin/model/dist/mcp-server.js"
       ],
       "env": {
         "YUNZAI_API_KEY": "mcp-yunzai-2024",

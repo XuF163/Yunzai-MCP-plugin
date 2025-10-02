@@ -3,8 +3,8 @@
     "target": "ES2020",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "outDir": "dist",
-    "rootDir": "src",
+    "outDir": "model/dist",
+    "rootDir": "model/src",
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -16,6 +16,6 @@
     "types": ["node"]
   },
   "include": [
-    "src/**/*"
+    "model/src/**/*"
   ]
 }

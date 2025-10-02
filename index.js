@@ -2,7 +2,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import fs from 'node:fs';
-import { MCPServer } from './dist/MCPServer.js';
+import { MCPServer } from './model/dist/MCPServer.js';
 import { spawn } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -46,7 +46,7 @@ try {
 // 启动独立的MCP服务器进程
 function startMCPProcess() {
     try {
-        const mcpServerPath = path.join(__dirname, 'dist', 'mcp-server.js');
+        const mcpServerPath = path.join(__dirname, 'model', 'dist', 'mcp-server.js');
         
         logger.info(`[${pluginName}] 启动独立MCP服务器进程...`);
         
@@ -162,4 +162,3 @@ for (let i in files) {
 }
 
 export { apps, mcpServer, stopMCPProcess };
-
