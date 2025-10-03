@@ -3,6 +3,18 @@ export declare class MCPHandler {
     setupActionMap(): void;
     getPublicActions(): string[];
     setupEventListeners(): void;
+    handleRenderTemplate(data?: {}): Promise<{
+        template: string;
+        plugin: any;
+        name: string;
+        count: number;
+        outputs: any[];
+        options: {
+            imgType: any;
+            setViewport: any;
+            multiPage: boolean;
+        };
+    }>;
     saveImageFile(buffer: any, filePath: any): Promise<void>;
     saveImageFileAndRegister(buffer: any, filePath: any, fileName: any): Promise<any>;
     saveImageFileQuietly(buffer: any, filePath: any): Promise<void>;

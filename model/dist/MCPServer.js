@@ -14,8 +14,8 @@ export class MCPServer {
     }
     loadConfig() {
         try {
-            const configPath = path.join(__dirname, '../config/config.yaml');
-            const defaultConfigPath = path.join(__dirname, '../config/defSet.yaml');
+            const configPath = path.join(__dirname, '../../config/config.yaml');
+            const defaultConfigPath = path.join(__dirname, '../../config/defSet.yaml');
             let configFile = configPath;
             if (!fs.existsSync(configPath)) {
                 configFile = defaultConfigPath;
@@ -240,6 +240,9 @@ export class MCPServer {
             'message.history', 'message.get', 'message.forward', 'recall.message',
             'mock.history'
         ];
+        if (this.config.mcp?.permissions?.allowRenderer) {
+            defaultActions.push('render.template');
+        }
         // 若 Handler 可提供动态列表则使用之
         const dynamic = this.handler?.getPublicActions?.();
         const actions = Array.isArray(dynamic) && dynamic.length ? dynamic : defaultActions;

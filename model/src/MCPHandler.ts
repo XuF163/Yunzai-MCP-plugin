@@ -4,6 +4,7 @@ import { promisify } from 'node:util';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import sizeOf from 'image-size';
+import RendererLoader from '../../../../lib/renderer/loader.js';
 
 // 导入模块化的管理器
 import { BotManager } from './model/BotManager.js';
@@ -101,6 +102,9 @@ export class MCPHandler {
       'network.interfaces': this.networkManager.getNetworkInterfaces.bind(this.networkManager),
       'network.testPort': this.networkManager.testPort.bind(this.networkManager),
 
+      // 渲染相关
+      'render.template': this.handleRenderTemplate.bind(this),
+
       // 唯一入站入口（专用 Mock 适配器）
       'mock.incoming.message': this.mock.incomingMessage.bind(this.mock),
 
@@ -145,6 +149,156 @@ export class MCPHandler {
     Bot.on('request', (data) => {
       this.broadcastEvent('request', data);
     });
+  }
+
+  async handleRenderTemplate(data = {}) {
+    this.checkPermission('allowRenderer');
+
+    const templateInput = data.template || data.tpl || data.tplFile || data.path || data.html;
+    if (!templateInput || typeof templateInput !== 'string') {
+      throw new Error('template 字段不能为空');
+    }
+
+    const normalizedPath = templateInput.trim().replace(/\\/g, '/');
+    if (!normalizedPath || normalizedPath.includes('..')) {
+      throw new Error('模板路径不合法');
+    }
+
+    const workspaceRoot = process.cwd();
+    const absoluteTemplatePath = path.isAbsolute(normalizedPath)
+      ? normalizedPath
+      : path.resolve(workspaceRoot, normalizedPath);
+
+    if (!absoluteTemplatePath.startsWith(workspaceRoot)) {
+      throw new Error('模板路径必须位于 Bot 工作目录内');
+    }
+
+    let stat;
+    try {
+      stat = await fs.stat(absoluteTemplatePath);
+    } catch (error) {
+      throw new Error(`模板文件不存在: ${absoluteTemplatePath}`);
+    }
+
+    if (!stat.isFile()) {
+      throw new Error(`模板路径不是文件: ${absoluteTemplatePath}`);
+    }
+
+    const relativePath = path.relative(workspaceRoot, absoluteTemplatePath).replace(/\\/g, '/');
+    const htmlWithoutExt = relativePath.replace(/\.html?$/i, '');
+    const fileBaseName = path.basename(htmlWithoutExt) || 'render';
+
+    const cloneData = (source) => {
+      if (!source || typeof source !== 'object') return {};
+      try {
+        if (typeof structuredClone === 'function') {
+          return structuredClone(source);
+        }
+      } catch {
+        // ignore structuredClone errors
+      }
+      return JSON.parse(JSON.stringify(source));
+    };
+
+    const templateData = cloneData(data.data);
+    const options = (data.options && typeof data.options === 'object') ? { ...data.options } : {};
+
+    let pluginName = data.plugin;
+    let templateRelative = htmlWithoutExt;
+    const resourceMatch = relativePath.match(/^plugins\/([^/]+)\/resources\/(.+)\.html$/i);
+    if (resourceMatch) {
+      pluginName = pluginName || resourceMatch[1];
+      templateRelative = resourceMatch[2];
+    }
+
+    const renderName = pluginName ? `${pluginName}/${templateRelative}` : templateRelative;
+    const saveId = options.saveId || templateData.saveId || fileBaseName;
+    const imgType = (options.imgType || 'png').toLowerCase();
+
+    const renderPayload = {
+      sys: templateData.sys || { scale: 1 },
+      ...templateData,
+      tplFile: absoluteTemplatePath,
+      saveId,
+      imgType
+    };
+
+    if (renderPayload.orientation === undefined) {
+      renderPayload.orientation = 'auto';
+    }
+
+    if (pluginName) {
+      const pluResPath = `./plugins/${pluginName}/resources/`;
+      renderPayload._plugin = pluginName;
+      renderPayload._htmlPath = templateRelative;
+      renderPayload.pluResPath = pluResPath;
+      renderPayload._res_path = pluResPath;
+
+      const miaoResPath = path.join(workspaceRoot, 'plugins/miao-plugin/resources');
+      renderPayload._miao_path = miaoResPath;
+      renderPayload._tpl_path = path.join(miaoResPath, 'common/tpl/');
+      renderPayload.defaultLayout = path.join(miaoResPath, 'common/layout/default.html');
+      renderPayload.elemLayout = path.join(miaoResPath, 'common/layout/elem.html');
+      renderPayload.copyright = renderPayload.copyright || 'Created By 那拉小派蒙 & bot.genshin.icu ';
+    } else {
+      renderPayload._htmlPath = templateRelative;
+    }
+
+    for (const [key, value] of Object.entries(options)) {
+      if (value !== undefined) {
+        renderPayload[key] = value;
+      }
+    }
+
+    const renderer = RendererLoader.getRenderer();
+    if (!renderer || typeof renderer.render !== 'function') {
+      throw new Error('未找到可用的渲染器实例');
+    }
+
+    const renderResult = await renderer.render(renderName, renderPayload);
+    if (!renderResult) {
+      throw new Error('渲染失败，未返回任何内容');
+    }
+
+    const buffers = Array.isArray(renderResult) ? renderResult : [renderResult];
+    const outputDir = path.join(workspaceRoot, 'data/mcp_client');
+    await fs.mkdir(outputDir, { recursive: true });
+
+    const extension = imgType === 'png' ? 'png' : (imgType === 'webp' ? 'webp' : 'jpg');
+    const baseSeed = (data.outputName || `${fileBaseName}-${Date.now().toString(36)}`).toString();
+    const sanitizedSeed = baseSeed.replace(/[^a-zA-Z0-9-_]/g, '_');
+
+    const outputs = [];
+    for (let index = 0; index < buffers.length; index++) {
+      const buffer = buffers[index];
+      if (!Buffer.isBuffer(buffer)) {
+        throw new Error('渲染输出格式不支持');
+      }
+
+      const suffix = buffers.length > 1 ? `-${index + 1}` : '';
+      const fileName = `${sanitizedSeed}${suffix}.${extension}`;
+      const absoluteOutput = path.join(outputDir, fileName);
+      const fileUrl = await this.saveImageFileAndRegister(buffer, absoluteOutput, fileName);
+      outputs.push({
+        path: path.posix.join('data/mcp_client', fileName),
+        absolutePath: absoluteOutput,
+        url: fileUrl,
+        size: buffer.length
+      });
+    }
+
+    return {
+      template: relativePath,
+      plugin: pluginName || null,
+      name: renderName,
+      count: outputs.length,
+      outputs,
+      options: {
+        imgType,
+        setViewport: renderPayload.setViewport || null,
+        multiPage: !!renderPayload.multiPage
+      }
+    };
   }
 
   // 保存图片文件的方法

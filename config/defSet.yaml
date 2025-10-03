@@ -30,6 +30,8 @@ mcp:
     allowPluginAccess: true
     # 是否允许文件操作
     allowFileOperations: true
+    # 是否允许调用渲染器
+    allowRenderer: true
     # 是否允许执行命令
     allowCommandExecution: true
     

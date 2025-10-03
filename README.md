@@ -1,12 +1,14 @@
 # Yunzai-MCP-Plugin
 
 实现LLM的插件自动化测试能力，从沙盒调试中解放出来  
-适用于trss yunzai (V3)
-
+适用于[trss yunzai (V3)](https://gitee.com/TimeRainStarSky/Yunzai) ，项目时开发使用版本f793f5a(2025-01-03)
+> [!WARNING]  
+> 项目仅供内网环境开发测试使用，谨慎在生产环境的Bot安装本插件，如有安装亦不建议端口暴露到公网，当前鉴权机制尚不完整，继续阅读即视为知晓风险
 ## 已实现的功能特性  
 通过MCP工具，你的claude code/codex/augment/trae可以实现以下能力：
 - 重启Bot
 - 构造任意测试用户或测试群，实现 **包含button在内的消息段的** 收发
+- 直接调用 `render.template` 动作按需渲染任意 HTML 模板，获取图片路径
 ## 快速上手
 ````
 git clone https://github.com/XuF163/Yunzai-MCP-plugin ./plugins/Yunzai-MCP-plugin
@@ -19,11 +21,12 @@ git clone https://gitee.com/xyzqwefd/Yunzai-MCP-plugin ./plugins/Yunzai-MCP-plug
 ```
 pnpm i
 ```
-### 效果演示
+### 效果演示  
+demo：使用[TRAE](https://www.trae.cn/) 国服免费版本进行测试
 ![img.png](resources/演示.png)
 ### TO DO
 ~~- [ ] 内置Context Engine以减少agent阅读代码时的token消耗以及索引效率提升~~用别的MCP替代就行了  
-~~- [ ] 对非合作Bot进行扫描、调试、风险评估、功能分析与二次开发~~ LLM会分不清，忽略  
+~~- [ ] 对非合作Bot进行扫描、调试、风险评估、功能分析与二次开发~~   
 ~~- [ ] 针对国产模型优化，提升较小上下文窗口条件下的开发质量~~ glm-4.6的200k够用了
 
 
