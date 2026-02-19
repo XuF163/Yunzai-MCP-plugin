@@ -243,6 +243,16 @@ class MCPServer {
     constructor() {
         this.requestId = 0;
         this.initialized = false;
+        this._outMode = 'content-length';
+    }
+    writeMessage(message) {
+        const json = JSON.stringify(message);
+        if (this._outMode === 'newline') {
+            process.stdout.write(json + '\n');
+            return;
+        }
+        const len = Buffer.byteLength(json, 'utf8');
+        process.stdout.write(`Content-Length: ${len}\r\n\r\n${json}`);
     }
     // 发送响应
     sendResponse(id, result = null, error = null) {
@@ -260,7 +270,7 @@ class MCPServer {
         else {
             response.result = result;
         }
-        console.log(JSON.stringify(response));
+        this.writeMessage(response);
     }
     // 发送通知
     sendNotification(method, params = {}) {
@@ -269,15 +279,19 @@ class MCPServer {
             method,
             params
         };
-        console.log(JSON.stringify(notification));
+        this.writeMessage(notification);
     }
     // 处理初始化
     async handleInitialize(id, params) {
         log('info', 'MCP Server initializing', params);
         const result = {
-            protocolVersion: '2024-11-05',
+            // Prefer echoing client protocol version for compatibility
+            protocolVersion: params?.protocolVersion || '2024-11-05',
             capabilities: {
                 tools: {
+                    listChanged: false
+                },
+                resources: {
                     listChanged: false
                 },
                 logging: {}
@@ -334,6 +348,10 @@ class MCPServer {
                 case 'tools/call':
                     await this.handleCallTool(id, params);
                     break;
+                // Resources: allow clients to call list even if we don't expose any resources
+                case 'resources/list':
+                    this.sendResponse(id, { resources: [] });
+                    break;
                 default:
                     this.sendResponse(id, null, {
                         code: -32601,
@@ -354,27 +372,70 @@ class MCPServer {
     // 启动服务器
     start() {
         log('info', 'MCP Server starting', MCP_CONFIG);
-        // 监听stdin输入
-        process.stdin.setEncoding('utf8');
-        let buffer = '';
-        process.stdin.on('data', (chunk) => {
-            buffer += chunk;
-            // 处理完整的JSON消息
-            let newlineIndex;
-            while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
-                const line = buffer.slice(0, newlineIndex).trim();
-                buffer = buffer.slice(newlineIndex + 1);
-                if (line) {
+        // 监听stdin输入（优先使用 MCP/LSP 标准 framing：Content-Length + CRLF）
+        let buffer = Buffer.alloc(0);
+        const parseBuffer = () => {
+            while (buffer.length > 0) {
+                const asString = buffer.toString('utf8');
+                let headerEnd = asString.indexOf('\r\n\r\n');
+                let headerSepLen = 4;
+                if (headerEnd === -1) {
+                    headerEnd = asString.indexOf('\n\n');
+                    headerSepLen = 2;
+                }
+                // Fallback：兼容旧的 newline-delimited JSON
+                if (headerEnd === -1) {
+                    const nl = asString.indexOf('\n');
+                    if (nl === -1)
+                        return;
+                    const line = asString.slice(0, nl).trim();
+                    const dropBytes = Buffer.byteLength(asString.slice(0, nl + 1), 'utf8');
+                    buffer = buffer.slice(dropBytes);
+                    if (!line)
+                        continue;
+                    if (/^Content-Length:/i.test(line))
+                        continue;
                     try {
+                        this._outMode = 'newline';
                         const message = JSON.parse(line);
                         this.handleMessage(message);
                     }
                     catch (error) {
                         log('error', 'JSON parse error', { error: error.message, line });
                     }
+                    continue;
+                }
+                const headerText = asString.slice(0, headerEnd);
+                const match = /Content-Length:\s*(\d+)/i.exec(headerText);
+                if (!match) {
+                    log('error', 'Missing Content-Length header', { header: headerText });
+                    return;
+                }
+                this._outMode = 'content-length';
+                const contentLength = parseInt(match[1], 10);
+                const bodyStart = headerEnd + headerSepLen;
+                const headerBytes = Buffer.byteLength(asString.slice(0, bodyStart), 'utf8');
+                if (buffer.length < headerBytes + contentLength)
+                    return;
+                const body = buffer.slice(headerBytes, headerBytes + contentLength).toString('utf8');
+                buffer = buffer.slice(headerBytes + contentLength);
+                try {
+                    const message = JSON.parse(body);
+                    this.handleMessage(message);
+                }
+                catch (error) {
+                    log('error', 'JSON parse error', { error: error.message, body });
                 }
             }
+        };
+        process.stdin.on('data', (chunk) => {
+            const b = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+            buffer = Buffer.concat([buffer, b]);
+            parseBuffer();
         });
+        // Ensure the process stays alive even if the client writes initialize slightly later.
+        // Some MCP clients spawn the server then wait before sending the first bytes.
+        process.stdin.resume();
         process.stdin.on('end', () => {
             log('info', 'MCP Server shutting down');
             process.exit(0);

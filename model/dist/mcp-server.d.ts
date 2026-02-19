@@ -4,6 +4,7 @@
  */
 declare class MCPServer {
     constructor();
+    writeMessage(message: any): void;
     sendResponse(id: any, result?: any, error?: any): void;
     sendNotification(method: any, params?: {}): void;
     handleInitialize(id: any, params: any): Promise<void>;
